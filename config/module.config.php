@@ -24,20 +24,29 @@ return [
         ],
     ],
     'form_elements' => [
+        'invokables' => [
+            'CSVImport\Form\MappingModelEditForm' => Form\MappingModelEditForm::class,
+            'CSVImport\Form\MappingModelSelectForm' => Form\MappingModelSelectForm::class,
+        ],
         'factories' => [
             'CSVImport\Form\ImportForm' => Service\Form\ImportFormFactory::class,
-            'CSVImport\Form\MappingForm' => Service\Form\MappingFormFactory::class,
+            'CSVImport\Form\MappingModelForm' => Service\Form\MappingModelFormFactory::class,
+            'CSVImport\Form\Element\MappingModelSelect' => Service\Form\Element\MappingModelSelectFactory::class,
+            'CSVImport\Form\MappingModelSaveForm' => Service\Form\MappingModelSaveFormFactory::class,
         ],
     ],
     'controllers' => [
         'factories' => [
             'CSVImport\Controller\Index' => Service\Controller\IndexControllerFactory::class,
+            'CSVImport\Controller\Admin\MappingModel' => Service\Controller\Admin\MappingModelControllerFactory::class,
         ],
     ],
     'controller_plugins' => [
         'factories' => [
             'automapHeadersToMetadata' => Service\ControllerPlugin\AutomapHeadersToMetadataFactory::class,
             'findResourcesFromIdentifiers' => Service\ControllerPlugin\FindResourcesFromIdentifiersFactory::class,
+            'loadMappingModel' => Service\ControllerPlugin\LoadMappingModelFactory::class,
+            'saveMappingModel' => Service\ControllerPlugin\SaveMappingModelFactory::class,
         ],
         'aliases' => [
             'findResourceFromIdentifier' => 'findResourcesFromIdentifiers',
@@ -47,6 +56,7 @@ return [
         'invokables' => [
             'csvimport_entities' => Api\Adapter\EntityAdapter::class,
             'csvimport_imports' => Api\Adapter\ImportAdapter::class,
+            'csvimport_mapping_models' => Api\Adapter\MappingModelAdapter::class,
         ],
     ],
     'service_manager' => [
@@ -92,6 +102,35 @@ return [
                                     ],
                                 ],
                             ],
+                            'mapping-model' => [
+                                'type' => 'Segment',
+                                'options' => [
+                                    'route' => '/mapping-model[/:action]',
+                                    'constraints' => [
+                                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                    ],
+                                    'defaults' => [
+                                        '__NAMESPACE__' => 'CSVImport\Controller\Admin',
+                                        'controller' => 'MappingModel',
+                                        'action' => 'browse',
+                                    ],
+                                ],
+                            ],
+                            'mapping-model-id' => [
+                                'type' => 'Segment',
+                                'options' => [
+                                    'route' => '/mapping-model/:id[/:action]',
+                                    'constraints' => [
+                                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                        'id' => '\d+',
+                                    ],
+                                    'defaults' => [
+                                        '__NAMESPACE__' => 'CSVImport\Controller\Admin',
+                                        'controller' => 'MappingModel',
+                                        'action' => 'show',
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -123,6 +162,10 @@ return [
                         'action' => 'past-imports',
                         'resource' => 'CSVImport\Controller\Index',
                     ],
+                    [
+                        'label' => 'Mapping Models', // @translate
+                        'route' => 'admin/csvimport/mapping-model',
+                    ],
                 ],
             ],
         ],
@@ -138,7 +181,7 @@ return [
         ],
     ],
     'js_translate_strings' => [
-        'Remove mapping', // @translate
+        'Remove mapping model', // @translate
     ],
     'csv_import' => [
         'sources' => [

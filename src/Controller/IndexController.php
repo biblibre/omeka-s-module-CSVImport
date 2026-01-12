@@ -2,7 +2,7 @@
 namespace CSVImport\Controller;
 
 use CSVImport\Form\ImportForm;
-use CSVImport\Form\MappingForm;
+use CSVImport\Form\MappingModelForm;
 use CSVImport\Source\SourceInterface;
 use CSVImport\Job\Import;
 use finfo;
@@ -123,8 +123,13 @@ class IndexController extends AbstractActionController
                 return $this->redirect()->toRoute('admin/csvimport');
             }
 
+            $session = new \Laminas\Session\Container('CsvImport');
+
+            $session->columns = $columns;
+            $session->resourceType = $resourceType;
+
             $mappingOptions['columns'] = $columns;
-            $form = $this->getForm(MappingForm::class, $mappingOptions);
+            $form = $this->getForm(MappingModelForm::class, $mappingOptions);
 
             $automapOptions = [];
             $automapOptions['check_names_alone'] = $args['automap_check_names_alone'];
@@ -143,9 +148,10 @@ class IndexController extends AbstractActionController
             $view->setVariable('mappings', $this->getMappingsForResource($resourceType));
             $view->setVariable('mediaForms', $this->getMediaForms());
             $view->setVariable('dataTypes', $this->getDataTypes());
+
             return $view;
         } else {
-            $form = $this->getForm(MappingForm::class, $mappingOptions);
+            $form = $this->getForm(MappingModelForm::class, $mappingOptions);
             $form->setData($post);
             if ($form->isValid()) {
                 if (isset($post['basic-settings']) || isset($post['advanced-settings'])) {
@@ -155,7 +161,10 @@ class IndexController extends AbstractActionController
                 }
 
                 $args = $this->cleanArgs($post);
+                $session = new \Laminas\Session\Container('CsvImport');
+                $args['columns'] = $session->columns;
                 $this->saveUserSettings($args);
+
                 $dispatcher = $this->jobDispatcher();
                 $job = $dispatcher->dispatch('CSVImport\Job\Import', $args);
                 // The CsvImport record is created in the job, so it doesn't
